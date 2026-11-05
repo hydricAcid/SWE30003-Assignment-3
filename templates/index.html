@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Order We Deliver - Delivery Management System</title>
+</head>
+<body>
+    <h1>SWE Assignment 3 - Your Order We Deliver</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category|upper }}]</strong> {{ message }}</p>
+            {% endfor %}
+            <hr>
+        {% endif %}
+    {% endwith %}
+
+
+    <h2>1. Log Delivery Request &amp; Quote Management</h2>
+    <form action="{{ url_for('create_request') }}" method="post">
+        <fieldset>
+            <legend>Log New Delivery Request (Customer / Office)</legend>
+            <label>Customer Name: <input type="text" name="customer_name" required placeholder="John Swinburne"></label><br><br>
+            <label>Phone (10 digits): <input type="text" name="customer_phone" required placeholder="0412345678"></label><br><br>
+            <label>Pickup Address: <input type="text" name="pickup_address" required placeholder="1 John St, Hawthorn 3122"></label><br><br>
+            <label>Drop-off Address): <input type="text" name="dropoff_address" required placeholder="360 Swanston St, Melbourne 3000"></label><br><br>
+            <label>Parcel Weight (kg): <input type="number" step="0.01" name="parcel_weight_kg" required placeholder="2.5"></label><br><br>
+            <button type="submit">Submit Delivery Request</button>
+        </fieldset>
+    </form>
+    <br>
+    <form action="{{ url_for('quote_request') }}" method="post">
+        <fieldset>
+            <legend>Provide Delivery Quote (Office Staff)</legend>
+            <label>Order ID:
+                <select name="request_id" required>
+                    {% for d in deliveries if d.status == 'Requested' %}
+                        <option value="{{ d.request_id }}">{{ d.request_id }} ({{ d.customer_name }})</option>
+                    {% endfor %}
+                </select>
+            </label><br><br>
+            <label>Quote Cost ($): <input type="number" step="0.01" name="quote_cost" required placeholder="25.00"></label><br><br>
+            <label>Est. Pickup (YYYY-MM-DD HH:MM): <input type="text" name="est_pickup_time" required placeholder="2026-03-07 10:00"></label><br><br>
+            <label>Est. Delivery (YYYY-MM-DD HH:MM): <input type="text" name="est_delivery_time" required placeholder="2026-03-07 14:00"></label><br><br>
+            <button type="submit">Issue Quote</button>
+        </fieldset>
+    </form>
+
+    <hr>
+
+
+    <h2>2. Delivery Staff &amp; Availability Management</h2>
+    <form action="{{ url_for('add_staff') }}" method="post">
+        <fieldset>
+            <legend>Onboard New Delivery Staff</legend>
+            <label>Full Name: <input type="text" name="full_name" required placeholder="Alice Bob"></label>
+            <label>Phone: <input type="text" name="phone" required placeholder="0422333444"></label>
+            <button type="submit">Add Staff</button>
+        </fieldset>
+    </form>
+    <br>
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Staff ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Employed</th>
+                <th>Availability</th>
+                <th>Update Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in staff_list %}
+            <tr>
+                <td>{{ s.staff_id }}</td>
+                <td>{{ s.full_name }}</td>
+                <td>{{ s.phone }}</td>
+                <td>{{ "Yes" if s.is_employed else "No (Left Business)" }}</td>
+                <td>{{ s.availability }}</td>
+                <td>
+                    {% if s.is_employed %}
+                    <form action="{{ url_for('update_staff') }}" method="post" style="display:inline;">
+                        <input type="hidden" name="staff_id" value="{{ s.staff_id }}">
+                        <select name="availability">
+                            <option value="Available">Available</option>
+                            <option value="Busy">Busy</option>
+                            <option value="Departed">Mark as Departed</option>
+                        </select>
+                        <button type="submit">Update</button>
+                    </form>
+                    {% else %}
+                    Inactive
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No staff registered yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+
+    <h2>3. Order Allocation &amp; Delivery Status Tracking</h2>
+    <form action="{{ url_for('allocate_delivery') }}" method="post">
+        <fieldset>
+            <legend>Allocate Available Driver to Paid Order</legend>
+            <label>Accepted Order:
+                <select name="request_id" required>
+                    {% for d in deliveries if d.status == 'Accepted & Paid' %}
+                        <option value="{{ d.request_id }}">{{ d.request_id }} - {{ d.dropoff_address }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Available Staff:
+                <select name="staff_id" required>
+                    {% for s in staff_list if s.availability == 'Available' and s.is_employed %}
+                        <option value="{{ s.staff_id }}">{{ s.staff_id }} ({{ s.full_name }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit">Assign Driver</button>
+        </fieldset>
+    </form>
+    <br>
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Pickup &rarr; Drop-off</th>
+                <th>Weight (kg)</th>
+                <th>Quote ($)</th>
+                <th>Schedule</th>
+                <th>Status</th>
+                <th>Staff ID</th>
+                <th>Payment Ref</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in deliveries %}
+            <tr>
+                <td>{{ d.request_id }}</td>
+                <td>{{ d.customer_name }} ({{ d.customer_phone }})</td>
+                <td>{{ d.pickup_address }} &rarr; {{ d.dropoff_address }}</td>
+                <td>{{ d.parcel_weight_kg }}</td>
+                <td>${{ "%.2f"|format(d.quote_cost) }}</td>
+                <td>{{ d.est_pickup_time or "-" }} to {{ d.est_delivery_time or "-" }}</td>
+                <td><strong>{{ d.status }}</strong></td>
+                <td>{{ d.assigned_staff_id or "Unassigned" }}</td>
+                <td>{{ d.payment_reference or "-" }}</td>
+                <td>
+                    {% if d.status == 'Quoted' %}
+                    <form action="{{ url_for('accept_quote') }}" method="post">
+                        <input type="hidden" name="request_id" value="{{ d.request_id }}">
+                        <button type="submit">Accept &amp; Pay Online</button>
+                    </form>
+                    {% elif d.status == 'Assigned' %}
+                    <form action="{{ url_for('complete_delivery') }}" method="post">
+                        <input type="hidden" name="request_id" value="{{ d.request_id }}">
+                        <button type="submit">Mark Delivered</button>
+                    </form>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10">No delivery requests logged yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- AREA 4: OPERATIONAL STATISTICS & REPORTING -->
+    <h2>4. Operational Statistics &amp; Reporting</h2>
+    <form action="{{ url_for('dashboard') }}" method="get">
+        <label>Period:
+            <select name="period">
+                <option value="day" {% if selected_period == 'day' %}selected{% endif %}>Past Day (24h)</option>
+                <option value="week" {% if selected_period == 'week' %}selected{% endif %}>Past Week (7d)</option>
+                <option value="month" {% if selected_period == 'month' %}selected{% endif %}>Past Month (30d)</option>
+                <option value="year" {% if selected_period == 'year' %}selected{% endif %}>Past Year (365d)</option>
+                <option value="ytd" {% if selected_period == 'ytd' %}selected{% endif %}>Year to Date (YTD)</option>
+            </select>
+        </label>
+        <label>Delivery Staff Filter:
+            <select name="staff_id">
+                <option value="">All Delivery Staff</option>
+                {% for s in staff_list %}
+                    <option value="{{ s.staff_id }}" {% if selected_staff == s.staff_id %}selected{% endif %}>
+                        {{ s.staff_id }} - {{ s.full_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Filter Statistics</button>
+    </form>
+
+    <ul>
+        <li><strong>Reporting Window:</strong> {{ stats.period }}</li>
+        <li><strong>Staff Filter:</strong> {{ stats.staff_filter }}</li>
+        <li><strong>Total Orders Logged in Period:</strong> {{ stats.total_logged_in_period }}</li>
+        <li><strong>Completed Deliveries:</strong> {{ stats.completed_deliveries }}</li>
+        <li><strong>Active / In-Progress Deliveries:</strong> {{ stats.active_pipeline_deliveries }}</li>
+        <li><strong>Completed Delivery Revenue:</strong> ${{ "%.2f"|format(stats.completed_revenue) }}</li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,2 @@
+request_id,customer_name,customer_phone,pickup_address,dropoff_address,parcel_weight_kg,status,quote_cost,est_pickup_time,est_delivery_time,assigned_staff_id,payment_reference,created_at,delivered_at
+ORD-1001,ewfqw wfqe,0462354625,"73 some st, place 3000","87 another st, location 3001",1.00,Delivered,1000.00,2026-12-04 12:00,2026-12-04 16:00,STF-102,PAY-ORD-1001-5A702C,2026-11-05 15:09,2026-11-05 15:12

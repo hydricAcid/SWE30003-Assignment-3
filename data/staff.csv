@@ -1,0 +1,3 @@
+staff_id,full_name,phone,availability,is_employed
+STF-101,some driver,0412345678,Inactive,False
+STF-102,another driver,0498765432,Busy,True
