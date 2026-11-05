@@ -1,5 +1,17 @@
 # SWE30003-Assignment-3
 
-- Each of the files are classes from assignment 2
-- Focus on the functionality for now, not the graphical interface.
-- use clear and understandable commit messages outlining what you have done.
+## Info
+- Coding standard used: PEP 8
+- Architectural Style: Data-centered
+- templates directory stores index.html page
+- data directory stores csv files that replace database
+- payment_gateway.py is a placeholder for a payment processor, always returns a successful payment
+## Install dependecies
+```
+pip install -r requirements.txt
+```
+## Running the App
+```
+python3 -m app.py
+```
+
