@@ -6,6 +6,7 @@
 - templates directory stores index.html page
 - data directory stores csv files that replace database
 - payment_gateway.py is a placeholder for a payment processor, always returns a successful payment
+- This is only a partial implementation that satisfies four business needs
 ## Install dependecies
 ```
 pip install -r requirements.txt
