@@ -1,8 +1,8 @@
 from typing import Dict
+from user import User
 
-
-class DeliveryStaff:
-    """Information holder for delivery staff identity and availibility."""
+class DeliveryStaff(User):
+    """Information holder for delivery staff identity and availability."""
 
     AVAILABILITY_AVAILABLE = "Available"
     AVAILABILITY_BUSY = "Busy"
@@ -16,14 +16,22 @@ class DeliveryStaff:
         availability: str = AVAILABILITY_AVAILABLE,
         is_employed: bool = True,
     ) -> None:
-        self.staff_id = staff_id
-        self.full_name = full_name
-        self.phone = phone
+        super().__init__(user_id=staff_id, full_name=full_name, phone=phone)
         self.availability = availability
         self.is_employed = is_employed
 
+    @property
+    def staff_id(self) -> str:
+        """Return the user_id as staff_id for domain compatibility."""
+        return self.user_id
+
+    @staff_id.setter
+    def staff_id(self, value: str) -> None:
+        """Update the underlying user_id when staff_id is modified."""
+        self.user_id = value
+
     def set_availability(self, new_status: str) -> None:
-        """Update driver availability status ."""
+        """Update driver availability status if actively employed."""
         if not self.is_employed:
             self.availability = self.AVAILABILITY_INACTIVE
             return
